@@ -1,0 +1,178 @@
+﻿@model DemoFacturacionHacienda.Models.Entities.Factura
+@{
+    ViewData["Title"] = "Detalle de Factura";
+}
+
+@{
+    var badge = Model.Estado switch
+    {
+        DemoFacturacionHacienda.Models.Entities.EstadoFactura.Aceptada => "success",
+        DemoFacturacionHacienda.Models.Entities.EstadoFactura.Rechazada => "danger",
+        DemoFacturacionHacienda.Models.Entities.EstadoFactura.Enviada => "info",
+        DemoFacturacionHacienda.Models.Entities.EstadoFactura.Error => "warning",
+        _ => "secondary"
+    };
+}
+
+<!-- Encabezado -->
+<div class="row mb-3">
+    <div class="col">
+        <a href="/Factura" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
+    </div>
+    <div class="col text-right">
+        <span class="badge badge-@badge p-2" style="font-size:1rem">
+            <i class="fas fa-circle mr-1"></i>@Model.Estado
+        </span>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Datos Emisor -->
+    <div class="col-md-6">
+        <div class="card card-primary card-outline">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-building mr-2"></i>Emisor</h3>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Nombre</dt>
+                    <dd class="col-sm-8">@Model.EmisorNombre</dd>
+                    <dt class="col-sm-4">Cédula</dt>
+                    <dd class="col-sm-8">@Model.EmisorCedula</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <!-- Datos Receptor -->
+    <div class="col-md-6">
+        <div class="card card-info card-outline">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-user mr-2"></i>Receptor</h3>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Nombre</dt>
+                    <dd class="col-sm-8">@Model.ReceptorNombre</dd>
+                    <dt class="col-sm-4">Cédula</dt>
+                    <dd class="col-sm-8">@Model.ReceptorCedula</dd>
+                    <dt class="col-sm-4">Correo</dt>
+                    <dd class="col-sm-8">@Model.ReceptorCorreo</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Info del comprobante -->
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-file-invoice mr-2"></i>Datos del Comprobante</h3>
+    </div>
+    <div class="card-body">
+        <dl class="row mb-0">
+            <dt class="col-sm-3">Consecutivo</dt>
+            <dd class="col-sm-9"><code>@Model.NumeroConsecutivo</code></dd>
+            <dt class="col-sm-3">Fecha Emisión</dt>
+            <dd class="col-sm-9">@Model.FechaEmision.ToString("dd/MM/yyyy HH:mm:ss")</dd>
+            @if (Model.FechaEnvio.HasValue)
+            {
+                <dt class="col-sm-3">Fecha Envío</dt>
+                <dd class="col-sm-9">@Model.FechaEnvio.Value.ToString("dd/MM/yyyy HH:mm:ss")</dd>
+            }
+            @if (!string.IsNullOrEmpty(Model.MensajeHacienda))
+            {
+                <dt class="col-sm-3">Respuesta Hacienda</dt>
+                <dd class="col-sm-9">
+                    <span class="text-@(Model.Estado == DemoFacturacionHacienda.Models.Entities.EstadoFactura.Aceptada ? "success" : "danger")">
+                        @Model.MensajeHacienda
+                    </span>
+                </dd>
+            }
+        </dl>
+    </div>
+</div>
+
+<!-- Líneas de detalle -->
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-list-ul mr-2"></i>Líneas de Detalle</h3>
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-striped mb-0">
+            <thead class="thead-dark">
+                <tr>
+                    <th>#</th>
+                    <th>Descripción</th>
+                    <th class="text-right">Cantidad</th>
+                    <th class="text-right">Precio Unit.</th>
+                    <th class="text-right">IVA %</th>
+                    <th class="text-right">Monto IVA</th>
+                    <th class="text-right">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var linea in Model.Lineas)
+                {
+                    <tr>
+                        <td>@linea.NumeroLinea</td>
+                        <td>@linea.Descripcion</td>
+                        <td class="text-right">@linea.Cantidad.ToString("N2")</td>
+                        <td class="text-right">₡@linea.PrecioUnitario.ToString("N2")</td>
+                        <td class="text-right">@linea.PorcentajeIVA%</td>
+                        <td class="text-right">₡@linea.MontoIVA.ToString("N2")</td>
+                        <td class="text-right"><strong>₡@linea.Total.ToString("N2")</strong></td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot class="thead-light">
+                <tr>
+                    <td colspan="5"></td>
+                    <td class="text-right"><strong>Subtotal</strong></td>
+                    <td class="text-right">₡@Model.TotalVenta.ToString("N2")</td>
+                </tr>
+                <tr>
+                    <td colspan="5"></td>
+                    <td class="text-right"><strong>IVA</strong></td>
+                    <td class="text-right">₡@Model.TotalImpuesto.ToString("N2")</td>
+                </tr>
+                <tr class="table-success">
+                    <td colspan="5"></td>
+                    <td class="text-right"><strong>Total</strong></td>
+                    <td class="text-right"><strong>₡@Model.TotalComprobante.ToString("N2")</strong></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+
+<!-- Botón enviar a Hacienda -->
+@if (Model.Estado == DemoFacturacionHacienda.Models.Entities.EstadoFactura.Borrador)
+{
+    <div class="text-right mb-4">
+        <form method="post" action="/Factura/Enviar/@Model.Id">
+            <button type="submit" class="btn btn-warning btn-lg">
+                <i class="fas fa-paper-plane"></i> Enviar a Hacienda
+            </button>
+        </form>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(Model.XmlGenerado))
+{
+    <div class="card card-secondary collapsed-card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-code mr-2"></i>XML Generado</h3>
+            <div class="card-tools">
+                <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <pre style="max-height:400px; overflow:auto; font-size:0.8rem">@Model.XmlGenerado</pre>
+        </div>
+    </div>
+}
