@@ -1,4 +1,5 @@
 using DemoFacturacionHacienda.Data;
+using DemoFacturacionHacienda.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,6 +9,9 @@ builder.Services.AddControllersWithViews();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite("Data Source=facturacion.db"));
+
+builder.Services.AddScoped<ClaveService>();
+builder.Services.AddScoped<XmlService>();
 
 var app = builder.Build();
 
