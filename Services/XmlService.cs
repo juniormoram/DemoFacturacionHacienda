@@ -1,5 +1,4 @@
 ﻿using DemoFacturacionHacienda.Models.Entities;
-using DemoFacturacionHacienda.Models.Hacienda;
 using System.Text;
 using System.Xml;
 
@@ -16,7 +15,6 @@ namespace DemoFacturacionHacienda.Services
 
         public string GenerarXml(Factura factura)
         {
-            // Generar clave si no tiene
             if (string.IsNullOrEmpty(factura.Clave))
                 factura.Clave = _claveService.GenerarClave(
                     factura.NumeroConsecutivo,
@@ -34,23 +32,16 @@ namespace DemoFacturacionHacienda.Services
             using var writer = XmlWriter.Create(sb, settings);
 
             writer.WriteStartDocument();
-            writer.WriteStartElement("FacturaElectronica",
-                "https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.3/facturaElectronica");
 
-            // Atributos del namespace
+            // Versión 4.4 — namespace actualizado
+            writer.WriteStartElement("FacturaElectronica",
+                "https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/facturaElectronica");
             writer.WriteAttributeString("xmlns", "xsi", null,
                 "http://www.w3.org/2001/XMLSchema-instance");
 
-            // Clave
             writer.WriteElementString("Clave", factura.Clave);
-
-            // Código Actividad
-            writer.WriteElementString("CodigoActividad", "12345");
-
-            // Número Consecutivo
+            writer.WriteElementString("CodigoActividad", "722000");
             writer.WriteElementString("NumeroConsecutivo", factura.NumeroConsecutivo);
-
-            // Fecha Emisión 
             writer.WriteElementString("FechaEmision",
                 factura.FechaEmision.ToString("yyyy-MM-ddTHH:mm:sszzz"));
 
@@ -58,57 +49,56 @@ namespace DemoFacturacionHacienda.Services
             writer.WriteStartElement("Emisor");
             writer.WriteElementString("Nombre", factura.EmisorNombre);
             writer.WriteStartElement("Identificacion");
-            writer.WriteElementString("Tipo", "02"); 
+            writer.WriteElementString("Tipo", "02");
             writer.WriteElementString("Numero",
                 factura.EmisorCedula.Replace("-", "").Replace(" ", ""));
-            writer.WriteEndElement(); // Identificacion
-            writer.WriteEndElement(); // Emisor
+            writer.WriteEndElement();
+            writer.WriteEndElement();
 
             // Receptor
             writer.WriteStartElement("Receptor");
             writer.WriteElementString("Nombre", factura.ReceptorNombre);
             writer.WriteStartElement("Identificacion");
-            writer.WriteElementString("Tipo", "01"); 
+            writer.WriteElementString("Tipo", "01");
             writer.WriteElementString("Numero",
                 factura.ReceptorCedula.Replace("-", "").Replace(" ", ""));
-            writer.WriteEndElement(); // Identificacion
+            writer.WriteEndElement();
             writer.WriteElementString("CorreoElectronico", factura.ReceptorCorreo);
-            writer.WriteEndElement(); // Receptor
+            writer.WriteEndElement();
 
-            // Detalle de servicios
+            // Condición de venta y medio de pago (nuevos en v4.4)
+            writer.WriteElementString("CondicionVenta", "01"); // 01 = Contado
+            writer.WriteStartElement("MedioPago");
+            writer.WriteElementString("Codigo", "01"); // 01 = Efectivo
+            writer.WriteEndElement();
+
+            // Detalle
             writer.WriteStartElement("DetalleServicio");
             foreach (var linea in factura.Lineas)
             {
                 writer.WriteStartElement("LineaDetalle");
-                writer.WriteElementString("NumeroLinea",
-                    linea.NumeroLinea.ToString());
-                writer.WriteElementString("Cantidad",
-                    linea.Cantidad.ToString("F5"));
+                writer.WriteElementString("NumeroLinea", linea.NumeroLinea.ToString());
+                writer.WriteElementString("Cantidad", linea.Cantidad.ToString("F5"));
                 writer.WriteElementString("UnidadMedida", "Sp");
                 writer.WriteElementString("Detalle", linea.Descripcion);
                 writer.WriteElementString("PrecioUnitario",
                     linea.PrecioUnitario.ToString("F5"));
-                writer.WriteElementString("MontoTotal",
-                    linea.SubTotal.ToString("F5"));
-                writer.WriteElementString("SubTotal",
-                    linea.SubTotal.ToString("F5"));
+                writer.WriteElementString("MontoTotal", linea.SubTotal.ToString("F5"));
+                writer.WriteElementString("SubTotal", linea.SubTotal.ToString("F5"));
 
-                // Impuesto
                 writer.WriteStartElement("Impuesto");
-                writer.WriteElementString("Codigo", "01"); // IVA
+                writer.WriteElementString("Codigo", "01");
                 writer.WriteElementString("CodigoTarifa",
                     ObtenerCodigoTarifa(linea.PorcentajeIVA));
-                writer.WriteElementString("Tarifa",
-                    linea.PorcentajeIVA.ToString("F2"));
-                writer.WriteElementString("Monto",
-                    linea.MontoIVA.ToString("F5"));
-                writer.WriteEndElement(); // Impuesto
+                writer.WriteElementString("Tarifa", linea.PorcentajeIVA.ToString("F2"));
+                writer.WriteElementString("Monto", linea.MontoIVA.ToString("F5"));
+                writer.WriteEndElement();
 
-                writer.WriteElementString("MontoTotalLinea",
-                    linea.Total.ToString("F5"));
-                writer.WriteEndElement(); // LineaDetalle
+                writer.WriteElementString("ImpuestoNeto", linea.MontoIVA.ToString("F5"));
+                writer.WriteElementString("MontoTotalLinea", linea.Total.ToString("F5"));
+                writer.WriteEndElement();
             }
-            writer.WriteEndElement(); // DetalleServicio
+            writer.WriteEndElement();
 
             // Resumen
             writer.WriteStartElement("ResumenFactura");
@@ -126,9 +116,12 @@ namespace DemoFacturacionHacienda.Services
                 factura.TotalImpuesto.ToString("F5"));
             writer.WriteElementString("TotalComprobante",
                 factura.TotalComprobante.ToString("F5"));
-            writer.WriteEndElement(); // ResumenFactura
 
-            writer.WriteEndElement(); // FacturaElectronica
+            // Campo nuevo obligatorio en v4.4
+            writer.WriteElementString("TipoCambio", "1.00000");
+            writer.WriteEndElement();
+
+            writer.WriteEndElement();
             writer.WriteEndDocument();
             writer.Flush();
 

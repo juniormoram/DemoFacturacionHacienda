@@ -10,11 +10,13 @@ namespace DemoFacturacionHacienda.Controllers
     {
         private readonly AppDbContext _db;
         private readonly XmlService _xmlService;
+        private readonly HaciendaService _haciendaService;
 
-        public FacturaController(AppDbContext db, XmlService xmlService)
+        public FacturaController(AppDbContext db, XmlService xmlService, HaciendaService haciendaService)
         {
             _db = db;
             _xmlService = xmlService;
+            _haciendaService = haciendaService;
         }
 
         public async Task<IActionResult> Index()
@@ -88,17 +90,46 @@ namespace DemoFacturacionHacienda.Controllers
 
             if (factura == null) return NotFound();
 
-            // Regenerar XML si no tiene
             if (string.IsNullOrEmpty(factura.XmlGenerado))
                 factura.XmlGenerado = _xmlService.GenerarXml(factura);
 
-            factura.Estado = EstadoFactura.Enviada;
+            // Enviar al sandbox de Hacienda
+            var (exito, mensaje) = await _haciendaService
+                .EnviarComprobanteAsync(factura, factura.XmlGenerado);
+
+            factura.Estado = exito ? EstadoFactura.Enviada : EstadoFactura.Error;
             factura.FechaEnvio = DateTime.Now;
-            factura.MensajeHacienda = "XML generado correctamente. Pendiente integración con API.";
+            factura.MensajeHacienda = mensaje;
 
             await _db.SaveChangesAsync();
 
             return RedirectToAction(nameof(Details), new { id });
         }
+
+        [HttpPost]
+        public async Task<IActionResult> ConsultarEstado(int id)
+        {
+            var factura = await _db.Facturas
+                .FirstOrDefaultAsync(f => f.Id == id);
+
+            if (factura == null) return NotFound();
+
+            var (estado, mensaje) = await _haciendaService
+                .ConsultarEstadoAsync(factura.Clave);
+
+            factura.Estado = estado.ToLower() switch
+            {
+                "aceptado" => EstadoFactura.Aceptada,
+                "rechazado" => EstadoFactura.Rechazada,
+                _ => EstadoFactura.Enviada
+            };
+            factura.MensajeHacienda = mensaje;
+            factura.FechaRespuesta = DateTime.Now;
+
+            await _db.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Details), new { id });
+        }
+        
     }
 }
