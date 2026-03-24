@@ -1,7 +1,8 @@
-﻿using System.Net.Http.Headers;
+﻿using DemoFacturacionHacienda.Models.Entities;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
-using DemoFacturacionHacienda.Models.Entities;
+using System.Xml;
 
 namespace DemoFacturacionHacienda.Services
 {
@@ -126,12 +127,34 @@ namespace DemoFacturacionHacienda.Services
 
                 var json = JsonDocument.Parse(content);
                 var estado = json.RootElement
-                    .GetProperty("indEstado").GetString() ?? "procesando";
-                var mensaje = json.RootElement
-                    .TryGetProperty("respuesta-xml", out var resp)
-                        ? resp.GetString() ?? "Sin mensaje"
-                        : "Sin mensaje adicional";
+                    .GetProperty("ind-estado").GetString() ?? "procesando";
+                var mensaje = "Sin mensaje adicional";
 
+                if (json.RootElement.TryGetProperty("respuesta-xml", out var resp))
+                {
+                    var base64 = resp.GetString();
+
+                    if (!string.IsNullOrEmpty(base64))
+                    {
+                        try
+                        {
+                            var xmlBytes = Convert.FromBase64String(base64);
+                            mensaje = Encoding.UTF8.GetString(xmlBytes);
+
+                            var xmlDoc = new XmlDocument();
+                            xmlDoc.LoadXml(mensaje);
+
+                            var detalle = xmlDoc.GetElementsByTagName("DetalleMensaje")
+                                               .Item(0)?.InnerText;
+
+                            mensaje = detalle ?? "Sin detalle";
+                        }
+                        catch
+                        {
+                            mensaje = "Error al decodificar mensaje";
+                        }
+                    }
+                }
                 return (estado, mensaje);
             }
             catch (Exception ex)

@@ -33,7 +33,7 @@ namespace DemoFacturacionHacienda.Services
 
             writer.WriteStartDocument();
 
-            // Versión 4.4 — namespace actualizado
+            // Versión 4.4
             writer.WriteStartElement("FacturaElectronica",
                 "https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/facturaElectronica");
             writer.WriteAttributeString("xmlns", "xsi", null,

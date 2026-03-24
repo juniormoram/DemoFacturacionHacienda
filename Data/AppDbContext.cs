@@ -18,7 +18,7 @@ namespace DemoFacturacionHacienda.Data
                 .HasForeignKey(l => l.FacturaId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Precisión para decimales
+            // Decimales
             modelBuilder.Entity<Factura>()
                 .Property(f => f.TotalVenta).HasPrecision(18, 5);
             modelBuilder.Entity<Factura>()

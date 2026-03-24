@@ -80,7 +80,7 @@ namespace DemoFacturacionHacienda.Controllers
             return View(factura);
         }
 
-        // Enviar a Hacienda (por ahora solo genera XML y marca como Enviada)
+        // Enviar a Hacienda (sandbox)
         [HttpPost]
         public async Task<IActionResult> Enviar(int id)
         {
