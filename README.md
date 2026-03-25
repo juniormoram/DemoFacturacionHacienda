@@ -7,7 +7,10 @@ Sistema demo de facturación electrónica desarrollado en .NET (ASP.NET Core Web
 
 Este proyecto fue desarrollado como demostración para:
 
-Comprender el flujo real de facturación electrónica en Costa Rica Integrar servicios externos (Hacienda) Manejar generación de XML estructurado Simular procesos de firma digital
+Comprender el flujo real de facturación electrónica en Costa Rica
+Integrar servicios externos (Hacienda)
+Manejar generación de XML estructurado
+Simular procesos de firma digital
 
 Flujo de facturación electrónica:
 
@@ -21,4 +24,5 @@ El sistema implementa: Autenticación con API de Hacienda (sandbox) Envío de co
 
 La firma digital requerida (XAdES-EPES) por el Ministerio de Hacienda de Costa Rica no se implementa completamente en este proyecto.
 
-En su lugar: Se utiliza una firma simulada La arquitectura está preparada para integrar firma real mediante certificados (.p12)
+En su lugar, se utiliza una firma simulada.
+La arquitectura está preparada para integrar firma real mediante certificados (.p12)
