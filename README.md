@@ -1,5 +1,8 @@
 Demo Facturación Electrónica Costa Rica
 
+Demo en vivo: https://demo-facturacion-hacienda.onrender.com
+⚠️ Hosted en Render (plan gratuito) — puede tardar unos minutos en cargar si el servidor estuvo inactivo.
+
 Sistema demo de facturación electrónica desarrollado en .NET (ASP.NET Core Web API) que simula el flujo completo requerido por el Ministerio de Hacienda de Costa Rica, incluyendo generación de XML, firma (simulada), envío y consulta de estado.
 
 Este proyecto fue desarrollado como demostración para:
